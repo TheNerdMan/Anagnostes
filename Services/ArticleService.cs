@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using SmartReader;
+using Microsoft.Extensions.Logging;
 
 namespace Anagnostes.Services;
 
@@ -10,9 +11,11 @@ namespace Anagnostes.Services;
 public class ArticleService : IDisposable
 {
     private readonly HttpClient _http;
+    private readonly ILogger<ArticleService> _logger;
 
-    public ArticleService()
+    public ArticleService(ILogger<ArticleService> logger)
     {
+        _logger = logger;
         _http = new HttpClient(new HttpClientHandler { AllowAutoRedirect = true });
         _http.DefaultRequestHeaders.UserAgent.ParseAdd(
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
@@ -24,6 +27,7 @@ public class ArticleService : IDisposable
     /// </summary>
     public async Task<(string Title, string Text)> FetchAsync(string url, CancellationToken ct = default)
     {
+        _logger.LogInformation("Article fetch started.");
         var html = await _http.GetStringAsync(url, ct).ConfigureAwait(false);
 
         var reader = new Reader(url, html);
@@ -37,6 +41,7 @@ public class ArticleService : IDisposable
         var title = string.IsNullOrWhiteSpace(article.Title) ? url : article.Title.Trim();
         var text  = article.TextContent.Trim();
 
+        _logger.LogInformation("Article fetch completed. {CharacterCount} characters extracted.", text.Length);
         return (title, text);
     }
 

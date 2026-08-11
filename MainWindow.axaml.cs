@@ -4,17 +4,22 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Anagnostes.ViewModels;
 using Anagnostes.Services;
+using Microsoft.Extensions.Logging;
 
 namespace Anagnostes;
 
 public partial class MainWindow : Window
 {
+    private readonly ILogger<MainWindow> _logger;
     private readonly MainViewModel _vm;
 
-    public MainWindow()
+    public MainWindow() : this(Program.LoggerFactory) { }
+
+    public MainWindow(ILoggerFactory loggerFactory)
     {
+        _logger = loggerFactory.CreateLogger<MainWindow>();
         InitializeComponent();
-        DataContext = _vm = new MainViewModel();
+        DataContext = _vm = new MainViewModel(loggerFactory);
         _vm.PropertyChanged += OnVmPropertyChanged;
     }
 
@@ -35,6 +40,7 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(System.EventArgs e)
     {
+        _logger.LogInformation("Main window closed.");
         _vm.PropertyChanged -= OnVmPropertyChanged;
         _vm.Dispose();
         base.OnClosed(e);

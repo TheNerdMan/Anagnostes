@@ -1,11 +1,14 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Microsoft.Extensions.Logging;
 
 namespace Anagnostes;
 
 public partial class App : Application
 {
+    private readonly ILogger<App> _logger = Program.LoggerFactory.CreateLogger<App>();
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -15,9 +18,10 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow();
+            _logger.LogInformation("Desktop lifetime initialized.");
+            desktop.MainWindow = new MainWindow(Program.LoggerFactory);
         }
 
         base.OnFrameworkInitializationCompleted();
     }
-}
+}

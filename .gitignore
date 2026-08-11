@@ -23,6 +23,7 @@ Thumbs.db
 
 # Avalonia designer cache
 **/.avalonia/
+**/artifacts/
 
 # KokoroSharp downloads model at runtime to the build directory — exclude it too
 **/kokoro*.onnx

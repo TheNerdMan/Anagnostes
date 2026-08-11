@@ -219,7 +219,7 @@
                                 Command="{Binding PlayCommand}"/>
                         <Button Classes="transport"
                                 Content="⏸"
-                                ToolTip.Tip="Pause / Resume"
+                                ToolTip.Tip="Pause (Play resumes at this sentence)"
                                 Command="{Binding PauseCommand}"/>
                         <Button Classes="transport"
                                 Content="⏹"
@@ -230,6 +230,24 @@
                                 Orientation="Horizontal" Spacing="4"
                                 VerticalAlignment="Center"
                                 Margin="0,0,4,0">
+                        <Button Classes="winamp"
+                                Content="SET"
+                                ToolTip.Tip="Settings"
+                                Command="{Binding SettingsCommand}"/>
+                        <TextBlock Text="VOICE"
+                                   FontFamily="Consolas,Courier New,monospace"
+                                   FontSize="9"
+                                   Foreground="#888888"
+                                   VerticalAlignment="Center"/>
+                        <ComboBox ItemsSource="{Binding Voices}"
+                                  SelectedItem="{Binding Voice}"
+                                  IsEnabled="{Binding CanChangeVoice}"
+                                  Width="100" Height="22"
+                                  FontFamily="Consolas,Courier New,monospace"
+                                  FontSize="9"
+                                  Foreground="#88DD44"
+                                  Background="#141414"
+                                  BorderBrush="#4A4A4A"/>
                         <TextBlock Text="VOL"
                                    FontFamily="Consolas,Courier New,monospace"
                                    FontSize="9"
@@ -248,6 +266,45 @@
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"/>
                 </DockPanel>
+            </Border>
+
+            <!-- Settings screen -->
+            <Border Grid.RowSpan="6"
+                    IsVisible="{Binding IsSettingsOpen}"
+                    Background="#232323"
+                    BorderBrush="#4CD619"
+                    BorderThickness="2"
+                    Margin="28">
+                <StackPanel Spacing="12" Margin="20">
+                    <DockPanel>
+                        <TextBlock Text="SETTINGS"
+                                   DockPanel.Dock="Left"
+                                   FontFamily="Consolas,Courier New,monospace"
+                                   FontSize="14" FontWeight="Bold"
+                                   Foreground="#4CD619"/>
+                        <Button Classes="winamp"
+                                DockPanel.Dock="Right"
+                                Content="CLOSE"
+                                Command="{Binding SettingsCommand}"/>
+                    </DockPanel>
+                    <TextBlock Text="VOICE"
+                               FontFamily="Consolas,Courier New,monospace"
+                               FontSize="10" Foreground="#888888"/>
+                    <ComboBox ItemsSource="{Binding Voices}"
+                              SelectedItem="{Binding Voice}"
+                              IsEnabled="{Binding CanChangeVoice}"
+                              Width="180" HorizontalAlignment="Left"
+                              FontFamily="Consolas,Courier New,monospace"
+                              Foreground="#88DD44" Background="#141414"/>
+                    <CheckBox IsChecked="{Binding ShareAnonymousLogs}"
+                              Content="Share anonymous logs"
+                              FontFamily="Consolas,Courier New,monospace"
+                              Foreground="#CCCCCC"/>
+                    <TextBlock Text="Opt-in only. Current app sends nothing; future diagnostics may use app events and counts, never URLs or article text."
+                               TextWrapping="Wrap"
+                               FontFamily="Consolas,Courier New,monospace"
+                               FontSize="10" Foreground="#888888"/>
+                </StackPanel>
             </Border>
 
         </Grid>
