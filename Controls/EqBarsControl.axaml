@@ -1,0 +1,6 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Anagnostes.Controls.EqBarsControl"
+             Height="40">
+    <Canvas x:Name="BarsCanvas" Background="Transparent" />
+</UserControl>

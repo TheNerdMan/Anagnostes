@@ -1,0 +1,29 @@
+# Build artefacts
+bin/
+obj/
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Avalonia designer cache
+**/.avalonia/
+
+# KokoroSharp downloads model at runtime to the build directory — exclude it too
+**/kokoro*.onnx
+**/voices/
