@@ -33,12 +33,25 @@
             <Setter Property="BorderBrush"     Value="#6A6A6A"/>
             <Setter Property="CornerRadius"    Value="1"/>
             <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="RenderTransform" Value="none"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.12"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.08" Easing="QuadraticEaseOut"/>
+                </Transitions>
+            </Setter>
         </Style>
         <Style Selector="Button.winamp:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="#555555"/>
         </Style>
         <Style Selector="Button.winamp:pressed /template/ ContentPresenter">
             <Setter Property="Background" Value="#2A2A2A"/>
+        </Style>
+        <Style Selector="Button.winamp:pressed">
+            <Setter Property="RenderTransform" Value="scale(0.97)"/>
+        </Style>
+        <Style Selector="Button.winamp:focus-visible /template/ ContentPresenter">
+            <Setter Property="BorderBrush" Value="#4CD619"/>
         </Style>
         <Style Selector="Button.winamp:disabled /template/ ContentPresenter">
             <Setter Property="Opacity" Value="0.35"/>
@@ -56,12 +69,25 @@
             <Setter Property="BorderBrush"     Value="#6A6A6A"/>
             <Setter Property="Padding"         Value="0"/>
             <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="RenderTransform" Value="none"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.12"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.08" Easing="QuadraticEaseOut"/>
+                </Transitions>
+            </Setter>
         </Style>
         <Style Selector="Button.transport:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="#4A4A4A"/>
         </Style>
         <Style Selector="Button.transport:pressed /template/ ContentPresenter">
             <Setter Property="Background" Value="#222222"/>
+        </Style>
+        <Style Selector="Button.transport:pressed">
+            <Setter Property="RenderTransform" Value="scale(0.97)"/>
+        </Style>
+        <Style Selector="Button.transport:focus-visible /template/ ContentPresenter">
+            <Setter Property="BorderBrush" Value="#4CD619"/>
         </Style>
         <Style Selector="Button.transport:disabled /template/ ContentPresenter">
             <Setter Property="Opacity" Value="0.35"/>
@@ -94,17 +120,16 @@
                             Width="16" Height="14" Padding="0"
                             Margin="0,0,2,0" FontSize="8"
                             Content="_"
+                            ToolTip.Tip="Minimize"
+                            AutomationProperties.Name="Minimize"
                             Click="MinimizeButton_Click"/>
                     <Button Grid.Column="2" Classes="winamp"
-                            Width="16" Height="14" Padding="0"
-                            Margin="0,0,2,0" FontSize="8"
-                            Content="□"
-                            Click="MaximizeButton_Click"/>
-                    <Button Grid.Column="3" Classes="winamp"
                             Width="16" Height="14" Padding="0"
                             Margin="0,0,4,0" FontSize="8"
                             Background="#8B0000"
                             Content="✕"
+                            ToolTip.Tip="Close"
+                            AutomationProperties.Name="Close"
                             Click="CloseButton_Click"/>
                 </Grid>
             </Border>
@@ -137,6 +162,8 @@
                                FontFamily="Consolas,Courier New,monospace"
                                FontSize="10"
                                Foreground="{StaticResource LcdDimGreen}"
+                               AutomationProperties.Name="Player status"
+                               AutomationProperties.LiveSetting="Polite"
                                TextWrapping="NoWrap"
                                TextTrimming="CharacterEllipsis"
                                VerticalAlignment="Center"/>
@@ -175,11 +202,16 @@
                          BorderThickness="1"
                          Padding="6,3"
                          CornerRadius="1"
+                         AutomationProperties.Name="Article URL"
+                         AutomationProperties.HelpText="Paste article URL to load its text for speech"
                          VerticalContentAlignment="Center"/>
                 <Button  Grid.Column="2"
                          Classes="winamp"
                          Content="▶ LOAD"
                          Command="{Binding LoadCommand}"
+                         ToolTip.Tip="Load article from URL"
+                         AutomationProperties.Name="Load article"
+                         AutomationProperties.HelpText="Fetches article from URL field"
                          Height="26"
                          FontSize="10"
                          Background="#2A3A2A"
@@ -215,15 +247,18 @@
                                 VerticalAlignment="Center">
                         <Button Classes="transport"
                                 Content="▶"
-                                ToolTip.Tip="Play"
+                                ToolTip.Tip="Play or resume"
+                                AutomationProperties.Name="Play or resume"
                                 Command="{Binding PlayCommand}"/>
                         <Button Classes="transport"
                                 Content="⏸"
                                 ToolTip.Tip="Pause (Play resumes at this sentence)"
+                                AutomationProperties.Name="Pause"
                                 Command="{Binding PauseCommand}"/>
                         <Button Classes="transport"
                                 Content="⏹"
                                 ToolTip.Tip="Stop"
+                                AutomationProperties.Name="Stop"
                                 Command="{Binding StopCommand}"/>
                     </StackPanel>
                     <StackPanel DockPanel.Dock="Right"
@@ -231,8 +266,9 @@
                                 VerticalAlignment="Center"
                                 Margin="0,0,4,0">
                         <Button Classes="winamp"
-                                Content="SET"
+                                Content="⚙️"
                                 ToolTip.Tip="Settings"
+                                AutomationProperties.Name="Open settings"
                                 Command="{Binding SettingsCommand}"/>
                         <TextBlock Text="VOICE"
                                    FontFamily="Consolas,Courier New,monospace"
@@ -247,7 +283,9 @@
                                   FontSize="9"
                                   Foreground="#88DD44"
                                   Background="#141414"
-                                  BorderBrush="#4A4A4A"/>
+                                  BorderBrush="#4A4A4A"
+                                  AutomationProperties.Name="Voice"
+                                  AutomationProperties.HelpText="Select text-to-speech voice"/>
                         <TextBlock Text="VOL"
                                    FontFamily="Consolas,Courier New,monospace"
                                    FontSize="9"
@@ -257,6 +295,8 @@
                                 Value="{Binding Volume}"
                                 Width="80"
                                 Foreground="#4CD619"
+                                AutomationProperties.Name="Volume"
+                                AutomationProperties.HelpText="Speech volume"
                                 VerticalAlignment="Center"/>
                     </StackPanel>
                     <TextBlock Text="{Binding TtsState}"
@@ -285,6 +325,7 @@
                         <Button Classes="winamp"
                                 DockPanel.Dock="Right"
                                 Content="CLOSE"
+                                AutomationProperties.Name="Close settings"
                                 Command="{Binding SettingsCommand}"/>
                     </DockPanel>
                     <TextBlock Text="VOICE"
@@ -295,7 +336,15 @@
                               IsEnabled="{Binding CanChangeVoice}"
                               Width="180" HorizontalAlignment="Left"
                               FontFamily="Consolas,Courier New,monospace"
-                              Foreground="#88DD44" Background="#141414"/>
+                              Foreground="#88DD44" Background="#141414"
+                              AutomationProperties.Name="Voice"
+                              AutomationProperties.HelpText="Select text-to-speech voice"/>
+                    <CheckBox IsChecked="{Binding AutoSpeak}"
+                              Content="Start speaking after load"
+                              FontFamily="Consolas,Courier New,monospace"
+                              Foreground="#CCCCCC"
+                              AutomationProperties.Name="Start speaking after load"
+                              AutomationProperties.HelpText="Automatically starts text-to-speech after an article loads"/>
                     <CheckBox IsChecked="{Binding ShareAnonymousLogs}"
                               Content="Share anonymous logs"
                               FontFamily="Consolas,Courier New,monospace"

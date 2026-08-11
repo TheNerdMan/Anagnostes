@@ -31,9 +31,11 @@ public sealed class SettingsService
 
     public string Voice => Get("voice") ?? DefaultVoice;
     public bool ShareAnonymousLogs => bool.TryParse(Get("shareAnonymousLogs"), out var value) && value;
+    public bool AutoSpeak => !bool.TryParse(Get("autoSpeak"), out var value) || value;
 
     public void SetVoice(string voice) => Set("voice", voice);
     public void SetShareAnonymousLogs(bool enabled) => Set("shareAnonymousLogs", enabled.ToString());
+    public void SetAutoSpeak(bool enabled) => Set("autoSpeak", enabled.ToString());
 
     private string? Get(string key)
     {

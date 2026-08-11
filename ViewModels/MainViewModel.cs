@@ -93,6 +93,19 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    private bool _autoSpeak = true;
+    public bool AutoSpeak
+    {
+        get => _autoSpeak;
+        set
+        {
+            if (_autoSpeak == value) return;
+            _autoSpeak = value;
+            _settings.SetAutoSpeak(value);
+            OnPropertyChanged();
+        }
+    }
+
     private bool _isSettingsOpen;
     public bool IsSettingsOpen { get => _isSettingsOpen; private set { _isSettingsOpen = value; OnPropertyChanged(); } }
 
@@ -119,6 +132,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _tts = new TtsService(loggerFactory.CreateLogger<TtsService>());
         _voice = _settings.Voice;
         _shareAnonymousLogs = _settings.ShareAnonymousLogs;
+        _autoSpeak = _settings.AutoSpeak;
 
         LoadCommand  = new RelayCommand(OnLoad,  () => !IsBusy && !string.IsNullOrWhiteSpace(Url));
         PlayCommand  = new RelayCommand(OnPlay,  () => ModelReady && !string.IsNullOrWhiteSpace(ArticleText) && TtsState is TtsState.Idle or TtsState.Paused);
@@ -176,6 +190,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             ArticleTitle = title;
             ArticleText  = text;
             StatusText   = $"Loaded: {title}";
+            if (AutoSpeak && ModelReady) await SpeakArticleAsync();
         }
         catch (Exception ex)
         {
@@ -185,9 +200,11 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         finally { IsBusy = false; }
     }
 
-    private async void OnPlay()
+    private async void OnPlay() => await SpeakArticleAsync();
+
+    private async Task SpeakArticleAsync()
     {
-        if (string.IsNullOrWhiteSpace(ArticleText)) return;
+        if (string.IsNullOrWhiteSpace(ArticleText) || !ModelReady) return;
         _logger.LogInformation("Play requested.");
         _speakCts = new CancellationTokenSource();
         await _tts.SpeakAsync(ArticleText, _speakCts.Token);
