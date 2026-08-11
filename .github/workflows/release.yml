@@ -1,0 +1,143 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: version
+        shell: bash
+        run: |
+          latest_tag="$(git tag --list 'v*' --sort=-version:refname | head -n 1)"
+          if [[ -z "$latest_tag" ]]; then
+            version="1.0.0"
+          elif [[ "$latest_tag" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.$((BASH_REMATCH[3] + 1))"
+          else
+            echo "Latest version tag '$latest_tag' is not SemVer vX.Y.Z." >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Update version metadata
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          version = os.environ["VERSION"]
+          four_part_version = f"{version}.0"
+          project = Path("Anagnostes.csproj")
+          project_text = project.read_text(encoding="utf-8-sig")
+          for name, value in {
+              "Version": version,
+              "AssemblyVersion": four_part_version,
+              "FileVersion": four_part_version,
+              "InformationalVersion": version,
+          }.items():
+              project_text, count = re.subn(
+                  fr"<{name}>[^<]*</{name}>", f"<{name}>{value}</{name}", project_text, count=1)
+              if count != 1:
+                  raise SystemExit(f"Missing {name} in {project}")
+          project.write_text(project_text, encoding="utf-8-sig")
+
+          manifest = Path("app.manifest")
+          manifest_text = manifest.read_text(encoding="utf-8-sig")
+          manifest_text, count = re.subn(
+              r'(<assemblyIdentity\s+version=")[^"]+(")',
+              rf'\g<1>{four_part_version}\g<2>', manifest_text, count=1)
+          if count != 1:
+              raise SystemExit("Missing assemblyIdentity version in app.manifest")
+          manifest.write_text(manifest_text, encoding="utf-8-sig")
+          PY
+
+      - name: Commit version and tag release
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Anagnostes.csproj app.manifest
+          if ! git diff --cached --quiet; then
+            git commit -m "🚀: release v$VERSION [skip ci]"
+          fi
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin HEAD:main --follow-tags
+
+  build:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: macos-13
+            rid: osx-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.prepare.outputs.version }}
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish
+        run: >-
+          dotnet publish Anagnostes.csproj --configuration Release --runtime ${{ matrix.rid }}
+          --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:Version=${{ needs.prepare.outputs.version }} --output publish/${{ matrix.rid }}
+
+      - name: Archive
+        shell: pwsh
+        run: >-
+          Compress-Archive -Path "publish/${{ matrix.rid }}/*"
+          -DestinationPath "Anagnostes-${{ needs.prepare.outputs.version }}-${{ matrix.rid }}.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.rid }}
+          path: Anagnostes-${{ needs.prepare.outputs.version }}-${{ matrix.rid }}.zip
+          if-no-files-found: error
+
+  release:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: release
+          merge-multiple: true
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: >-
+          gh release create "v$VERSION" release/*.zip
+          --title "Anagnostes v$VERSION" --generate-notes
