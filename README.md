@@ -1,6 +1,6 @@
 # Anagnostes
 
-> *ἀναγνώστης* — Greek for "reader"
+> ἀναγνώστης - Ancient Greek, “reader, one who reads aloud”.
 
 A WinAMP-inspired article-to-speech player built with **Avalonia UI** (.NET 10) and **KokoroSharp**.
 
