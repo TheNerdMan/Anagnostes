@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 0
 
       - id: version
@@ -38,53 +38,14 @@ jobs:
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      - name: Update version metadata
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          python3 - <<'PY'
-          import os
-          import re
-          from pathlib import Path
-
-          version = os.environ["VERSION"]
-          four_part_version = f"{version}.0"
-          project = Path("Anagnostes.csproj")
-          project_text = project.read_text(encoding="utf-8-sig")
-          for name, value in {
-              "Version": version,
-              "AssemblyVersion": four_part_version,
-              "FileVersion": four_part_version,
-              "InformationalVersion": version,
-          }.items():
-              project_text, count = re.subn(
-                  fr"<{name}>[^<]*</{name}>", f"<{name}>{value}</{name}", project_text, count=1)
-              if count != 1:
-                  raise SystemExit(f"Missing {name} in {project}")
-          project.write_text(project_text, encoding="utf-8-sig")
-
-          manifest = Path("app.manifest")
-          manifest_text = manifest.read_text(encoding="utf-8-sig")
-          manifest_text, count = re.subn(
-              r'(<assemblyIdentity\s+version=")[^"]+(")',
-              rf'\g<1>{four_part_version}\g<2>', manifest_text, count=1)
-          if count != 1:
-              raise SystemExit("Missing assemblyIdentity version in app.manifest")
-          manifest.write_text(manifest_text, encoding="utf-8-sig")
-          PY
-
-      - name: Commit version and tag release
+      - name: Tag release
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Anagnostes.csproj app.manifest
-          if ! git diff --cached --quiet; then
-            git commit -m "🚀: release v$VERSION [skip ci]"
-          fi
           git tag -a "v$VERSION" -m "Release v$VERSION"
-          git push origin HEAD:main --follow-tags
+          git push origin "refs/tags/v$VERSION"
 
   build:
     needs: prepare
@@ -112,7 +73,11 @@ jobs:
         run: >-
           dotnet publish Anagnostes.csproj --configuration Release --runtime ${{ matrix.rid }}
           --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
-          -p:Version=${{ needs.prepare.outputs.version }} --output publish/${{ matrix.rid }}
+          -p:Version=${{ needs.prepare.outputs.version }}
+          -p:AssemblyVersion=${{ needs.prepare.outputs.version }}.0
+          -p:FileVersion=${{ needs.prepare.outputs.version }}.0
+          -p:InformationalVersion=${{ needs.prepare.outputs.version }}
+          --output publish/${{ matrix.rid }}
 
       - name: Archive
         shell: pwsh
