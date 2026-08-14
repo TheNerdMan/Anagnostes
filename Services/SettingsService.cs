@@ -11,6 +11,10 @@ public sealed class SettingsService
     private readonly string _connectionString;
     private readonly ILogger<SettingsService> _logger;
 
+    public static string DefaultModelFolder { get; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Anagnostes", "Models");
+
     public SettingsService(ILogger<SettingsService> logger)
     {
         _logger = logger;
@@ -32,10 +36,12 @@ public sealed class SettingsService
     public string Voice => Get("voice") ?? DefaultVoice;
     public bool ShareAnonymousLogs => bool.TryParse(Get("shareAnonymousLogs"), out var value) && value;
     public bool AutoSpeak => !bool.TryParse(Get("autoSpeak"), out var value) || value;
+    public string ModelFolder => Get("modelFolder") ?? DefaultModelFolder;
 
     public void SetVoice(string voice) => Set("voice", voice);
     public void SetShareAnonymousLogs(bool enabled) => Set("shareAnonymousLogs", enabled.ToString());
     public void SetAutoSpeak(bool enabled) => Set("autoSpeak", enabled.ToString());
+    public void SetModelFolder(string folder) => Set("modelFolder", folder);
 
     private string? Get(string key)
     {

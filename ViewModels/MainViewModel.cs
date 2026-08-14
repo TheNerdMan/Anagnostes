@@ -106,6 +106,19 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    private string _modelFolder = string.Empty;
+    public string ModelFolder
+    {
+        get => _modelFolder;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value) || _modelFolder == value) return;
+            _modelFolder = value;
+            _settings.SetModelFolder(value);
+            OnPropertyChanged();
+        }
+    }
+
     private bool _isSettingsOpen;
     public bool IsSettingsOpen { get => _isSettingsOpen; private set { _isSettingsOpen = value; OnPropertyChanged(); } }
 
@@ -123,6 +136,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public RelayCommand PauseCommand { get; }
     public RelayCommand StopCommand  { get; }
     public RelayCommand SettingsCommand { get; }
+    public RelayCommand ResetModelFolderCommand { get; }
 
     public MainViewModel(ILoggerFactory loggerFactory)
     {
@@ -133,12 +147,14 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _voice = _settings.Voice;
         _shareAnonymousLogs = _settings.ShareAnonymousLogs;
         _autoSpeak = _settings.AutoSpeak;
+        _modelFolder = _settings.ModelFolder;
 
         LoadCommand  = new RelayCommand(OnLoad,  () => !IsBusy && !string.IsNullOrWhiteSpace(Url));
         PlayCommand  = new RelayCommand(OnPlay,  () => ModelReady && !string.IsNullOrWhiteSpace(ArticleText) && TtsState is TtsState.Idle or TtsState.Paused);
         PauseCommand = new RelayCommand(OnPause, () => TtsState == Services.TtsState.Speaking);
         StopCommand  = new RelayCommand(OnStop,  () => TtsState != TtsState.Idle);
         SettingsCommand = new RelayCommand(() => IsSettingsOpen = !IsSettingsOpen);
+        ResetModelFolderCommand = new RelayCommand(() => ModelFolder = SettingsService.DefaultModelFolder);
 
         _tts.StateChanged     += s => Dispatcher.UIThread.Post(() => TtsState = s);
         _tts.Error            += msg => Dispatcher.UIThread.Post(() => StatusText = $"⚠ {msg}");
@@ -158,7 +174,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         StatusText = "Loading TTS model…";
         try
         {
-            await Task.Run(_tts.InitialiseAsync);
+            await Task.Run(() => _tts.InitialiseAsync(_modelFolder));
             ModelReady = _tts.IsReady;
             if (ModelReady)
             {

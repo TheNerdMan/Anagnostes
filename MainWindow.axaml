@@ -345,6 +345,34 @@
                               Foreground="#CCCCCC"
                               AutomationProperties.Name="Start speaking after load"
                               AutomationProperties.HelpText="Automatically starts text-to-speech after an article loads"/>
+                    <TextBlock Text="MODEL FOLDER"
+                               FontFamily="Consolas,Courier New,monospace"
+                               FontSize="10" Foreground="#888888"/>
+                    <Grid ColumnDefinitions="*,6,Auto">
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding ModelFolder}"
+                                 FontFamily="Consolas,Courier New,monospace"
+                                 FontSize="10"
+                                 Background="#141414"
+                                 Foreground="#CCCCCC"
+                                 CaretBrush="#4CD619"
+                                 BorderBrush="#4A4A4A"
+                                 BorderThickness="1"
+                                 Padding="4,2"
+                                 CornerRadius="1"
+                                 AutomationProperties.Name="Model folder path"
+                                 AutomationProperties.HelpText="Folder where the TTS model file is stored"/>
+                        <Button Grid.Column="2"
+                                Classes="winamp"
+                                Content="RESET"
+                                ToolTip.Tip="Reset to default model folder"
+                                AutomationProperties.Name="Reset model folder"
+                                Command="{Binding ResetModelFolderCommand}"/>
+                    </Grid>
+                    <TextBlock Text="Changes take effect on next model load."
+                               TextWrapping="Wrap"
+                               FontFamily="Consolas,Courier New,monospace"
+                               FontSize="10" Foreground="#888888"/>
                     <CheckBox IsChecked="{Binding ShareAnonymousLogs}"
                               Content="Share anonymous logs"
                               FontFamily="Consolas,Courier New,monospace"
