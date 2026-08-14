@@ -208,7 +208,7 @@
                 <Button  Grid.Column="2"
                          Classes="winamp"
                          Content="▶ LOAD"
-                         Command="{Binding LoadCommand}"
+                         Command="{Binding FetchCommand}"
                          ToolTip.Tip="Load article from URL"
                          AutomationProperties.Name="Load article"
                          AutomationProperties.HelpText="Fetches article from URL field"
@@ -226,11 +226,13 @@
                     Margin="4,2,4,2">
                 <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                               VerticalScrollBarVisibility="Auto">
-                    <TextBlock Text="{Binding ArticleText}"
+                    <TextBox Text="{Binding ArticleText}"
                                FontFamily="Consolas,Courier New,monospace"
                                FontSize="11"
                                Foreground="#BBBBBB"
                                TextWrapping="Wrap"
+                               AcceptsReturn="True"
+                               AcceptsTab="False"
                                Padding="8,6"/>
                 </ScrollViewer>
             </Border>
