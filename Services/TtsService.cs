@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,18 +33,33 @@ public class TtsService : IDisposable
 
     public TtsService(ILogger<TtsService> logger) => _logger = logger;
 
-    /// <summary>Loads the Kokoro model asynchronously. Must be called before Speak.</summary>
-    public async Task InitialiseAsync()
+    /// <summary>Loads the Kokoro model from <paramref name="modelFolder"/>, downloading it first if absent.</summary>
+    public async Task InitialiseAsync(string modelFolder)
     {
         if (_tts != null) return;
-        _logger.LogInformation("TTS model load started.");
+        _logger.LogInformation("TTS model load started. {ModelFolder}", modelFolder);
         SetState(TtsState.Loading);
         try
         {
-            _tts = await KokoroTTS.LoadModelAsync(
-                model: default,
-                OnDownloadProgress: p => DownloadProgress?.Invoke(p),
-                sessionOptions: null).ConfigureAwait(false);
+            Directory.CreateDirectory(modelFolder);
+
+            // KokoroLoader.DownloadModelAsync resolves the model file relative to the current
+            // working directory. We temporarily switch CWD to the model folder so that the
+            // package's own downloader (including its URL and version logic) places — and
+            // later finds — the file in the correct persistent location.
+            var previousCwd = Environment.CurrentDirectory;
+            Environment.CurrentDirectory = modelFolder;
+            try
+            {
+                _tts = await KokoroTTS.LoadModelAsync(
+                    model: default,
+                    OnDownloadProgress: p => DownloadProgress?.Invoke(p),
+                    sessionOptions: null).ConfigureAwait(false);
+            }
+            finally
+            {
+                Environment.CurrentDirectory = previousCwd;
+            }
 
             _voice = KokoroVoiceManager.GetVoice("af_heart");
             _logger.LogInformation("TTS model load completed.");
