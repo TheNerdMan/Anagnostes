@@ -17,10 +17,18 @@ A WinAMP-inspired article-to-speech player built with **Avalonia UI** (.NET 10) 
 
 ## Shoutouts
 Anagnostes is built on the shoulders of giants, and would not exist without the following open-source projects:
-[Avalonia UI](https://github.com/AvaloniaUI/Avalonia)
-[KokoroSharp](https://github.com/Lyrcaxis/KokoroSharp)
-[Kokoro](https://github.com/hexgrad/kokoro)
-[SmartReader](https://github.com/strumenta/SmartReader)
+
+# [Avalonia UI](https://github.com/AvaloniaUI/Avalonia)
+The cross-platform UI framework that powers the Anagnostes interface.
+
+# [KokoroSharp](https://github.com/Lyrcaxis/KokoroSharp)
+The .NET wrapper for the Kokoro TTS model, enabling high-quality neural speech synthesis.
+
+# [Kokoro](https://github.com/hexgrad/kokoro)
+The high-quality neural TTS model used by KokoroSharp.
+
+# [SmartReader](https://github.com/strumenta/SmartReader)
+The readability-style article extraction library that removes boilerplate content from web pages.
 
 # Developing
 
