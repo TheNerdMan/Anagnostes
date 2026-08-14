@@ -30,15 +30,46 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     // ── Bindable properties ──────────────────────────────────────────────────
 
     private string _url = string.Empty;
-    public string Url { get => _url; set { _url = value; OnPropertyChanged(); LoadCommand.RaiseCanExecuteChanged(); } }
+    public string Url { get => _url; set { _url = value; OnPropertyChanged(); FetchCommand.RaiseCanExecuteChanged(); } }
+
+    private string _fetchedArticleTitle = "";
+    public string FetchedArticleTitle { get => _fetchedArticleTitle; set { _fetchedArticleTitle = value; OnPropertyChanged(); } }
+
+    private string _fetchedArticleText = string.Empty;
+    public string FetchedArticleText { get => _fetchedArticleText; set { _fetchedArticleText = value; OnPropertyChanged();  } }
 
     private string _articleTitle = "ANAGNOSTES";
     public string ArticleTitle { get => _articleTitle; set { _articleTitle = value; OnPropertyChanged(); } }
 
     private string _articleText = string.Empty;
-    public string ArticleText { get => _articleText; set { _articleText = value; OnPropertyChanged(); } }
+    private bool _suppressAutoLoad;
+    public string ArticleText
+    {
+        get => _articleText;
+        set
+        {
+            var previous = _articleText;
+            _articleText = value;
+            OnPropertyChanged();
+            LoadCommand.RaiseCanExecuteChanged();
 
-    private string _statusText = "Paste a URL and press LOAD";
+            // Detect a paste (or drag-drop/IME bulk insert) as opposed to normal typing:
+            // a single keystroke only ever changes the length by one character, whereas
+            // pasting drops a whole block of text in at once.
+            if (!_suppressAutoLoad && !IsBusy && LooksLikePastedText(previous, value))
+            {
+                OnLoad();
+            }
+        }
+    }
+
+    private static bool LooksLikePastedText(string previous, string current)
+        // A single keystroke inserts at most one character - except Enter, which can
+        // insert a 2-character "\r\n" now that the box accepts multi-line text. Require
+        // a bigger jump than that so normal typing/newlines never false-trigger this.
+        => !string.IsNullOrWhiteSpace(current) && current.Length - previous.Length > 2;
+
+    private string _statusText = "Ready - paste a URL (or any text) and press LOAD";
     public string StatusText { get => _statusText; set { _statusText = value; OnPropertyChanged(); } }
 
     private bool _isBusy;
@@ -106,6 +137,19 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    private string _modelFolder = string.Empty;
+    public string ModelFolder
+    {
+        get => _modelFolder;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value) || _modelFolder == value) return;
+            _modelFolder = value;
+            _settings.SetModelFolder(value);
+            OnPropertyChanged();
+        }
+    }
+
     private bool _isSettingsOpen;
     public bool IsSettingsOpen { get => _isSettingsOpen; private set { _isSettingsOpen = value; OnPropertyChanged(); } }
 
@@ -118,11 +162,13 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     // ── Commands ─────────────────────────────────────────────────────────────
 
+    public RelayCommand FetchCommand  { get; }
     public RelayCommand LoadCommand  { get; }
     public RelayCommand PlayCommand  { get; }
     public RelayCommand PauseCommand { get; }
     public RelayCommand StopCommand  { get; }
     public RelayCommand SettingsCommand { get; }
+    public RelayCommand ResetModelFolderCommand { get; }
 
     public MainViewModel(ILoggerFactory loggerFactory)
     {
@@ -133,12 +179,15 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _voice = _settings.Voice;
         _shareAnonymousLogs = _settings.ShareAnonymousLogs;
         _autoSpeak = _settings.AutoSpeak;
+        _modelFolder = _settings.ModelFolder;
 
-        LoadCommand  = new RelayCommand(OnLoad,  () => !IsBusy && !string.IsNullOrWhiteSpace(Url));
+        FetchCommand  = new RelayCommand(OnFetch,  () => !IsBusy && !string.IsNullOrWhiteSpace(Url));
+        LoadCommand  = new RelayCommand(OnLoad,  () => !IsBusy && !string.IsNullOrWhiteSpace(ArticleText));
         PlayCommand  = new RelayCommand(OnPlay,  () => ModelReady && !string.IsNullOrWhiteSpace(ArticleText) && TtsState is TtsState.Idle or TtsState.Paused);
         PauseCommand = new RelayCommand(OnPause, () => TtsState == Services.TtsState.Speaking);
         StopCommand  = new RelayCommand(OnStop,  () => TtsState != TtsState.Idle);
         SettingsCommand = new RelayCommand(() => IsSettingsOpen = !IsSettingsOpen);
+        ResetModelFolderCommand = new RelayCommand(() => ModelFolder = SettingsService.DefaultModelFolder);
 
         _tts.StateChanged     += s => Dispatcher.UIThread.Post(() => TtsState = s);
         _tts.Error            += msg => Dispatcher.UIThread.Post(() => StatusText = $"⚠ {msg}");
@@ -158,7 +207,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         StatusText = "Loading TTS model…";
         try
         {
-            await Task.Run(_tts.InitialiseAsync);
+            await Task.Run(() => _tts.InitialiseAsync(_modelFolder));
             ModelReady = _tts.IsReady;
             if (ModelReady)
             {
@@ -177,19 +226,56 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    private async void OnLoad()
+    private async void OnFetch()
     {
         if (string.IsNullOrWhiteSpace(Url)) return;
-        _logger.LogInformation("Article load requested.");
+        _logger.LogInformation("Article fetch requested.");
         IsBusy = true;
         StatusText = "Fetching article…";
         ArticleText = string.Empty;
         try
         {
             var (title, text) = await _articles.FetchAsync(Url.Trim());
-            ArticleTitle = title;
-            ArticleText  = text;
-            StatusText   = $"Loaded: {title}";
+            FetchedArticleTitle = title;
+            FetchedArticleText  = text;
+            await LoadArticleAsync(title, text, setArticleText: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Article fetch failed.");
+            StatusText = $"ΓÜá∩╕Å {ex.Message}";
+        }
+        finally { IsBusy = false; }
+    }
+
+    // Fired either by the (unbound-by-default) LoadCommand or automatically when a
+    // paste into the article text box is detected. In both cases ArticleText already
+    // holds the text to speak, so we only need to set a title and kick off speech.
+    private async void OnLoad()
+    {
+        if (string.IsNullOrWhiteSpace(ArticleText)) return;
+        await LoadArticleAsync(title: null, ArticleText, setArticleText: false);
+    }
+
+    private async Task LoadArticleAsync(string? title, string text, bool setArticleText)
+    {
+        IsBusy = true;
+        StatusText = "Loading Text...";
+        try
+        {
+            var displayTitle = string.IsNullOrWhiteSpace(title) ? "Custom Text" : title;
+            ArticleTitle = displayTitle;
+
+            if (setArticleText)
+            {
+                // Prevent the paste-detection logic in the ArticleText setter from
+                // re-entering OnLoad when we assign fetched text here.
+                _suppressAutoLoad = true;
+                ArticleText = text;
+                _suppressAutoLoad = false;
+            }
+
+            StatusText = $"Loaded: {displayTitle}";
             if (AutoSpeak && ModelReady) await SpeakArticleAsync();
         }
         catch (Exception ex)
