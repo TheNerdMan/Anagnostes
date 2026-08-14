@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,11 +15,6 @@ public enum TtsState { Idle, Loading, Speaking, Paused }
 /// <summary>Wraps KokoroSharp to provide TTS playback with play/pause/stop control.</summary>
 public class TtsService : IDisposable
 {
-    private const string ModelFileName = "kokoro.onnx";
-    private const string ModelDownloadUrl = "https://github.com/Lyrcaxis/KokoroSharpBinaries/releases/download/v2.0.0/kokoro.onnx";
-
-    private static readonly HttpClient _httpClient = new();
-
     private readonly ILogger<TtsService> _logger;
     private KokoroTTS? _tts;
     private KokoroVoice? _voice;
@@ -48,15 +42,24 @@ public class TtsService : IDisposable
         try
         {
             Directory.CreateDirectory(modelFolder);
-            var modelPath = Path.Combine(modelFolder, ModelFileName);
 
-            if (!File.Exists(modelPath))
+            // KokoroLoader.DownloadModelAsync resolves the model file relative to the current
+            // working directory. We temporarily switch CWD to the model folder so that the
+            // package's own downloader (including its URL and version logic) places — and
+            // later finds — the file in the correct persistent location.
+            var previousCwd = Environment.CurrentDirectory;
+            Environment.CurrentDirectory = modelFolder;
+            try
             {
-                _logger.LogInformation("Downloading TTS model to {ModelPath}.", modelPath);
-                await DownloadModelAsync(modelPath).ConfigureAwait(false);
+                _tts = await KokoroTTS.LoadModelAsync(
+                    model: default,
+                    OnDownloadProgress: p => DownloadProgress?.Invoke(p),
+                    sessionOptions: null).ConfigureAwait(false);
             }
-
-            _tts = await Task.Run(() => KokoroTTS.LoadModel(modelPath)).ConfigureAwait(false);
+            finally
+            {
+                Environment.CurrentDirectory = previousCwd;
+            }
 
             _voice = KokoroVoiceManager.GetVoice("af_heart");
             _logger.LogInformation("TTS model load completed.");
@@ -68,29 +71,6 @@ public class TtsService : IDisposable
             SetState(TtsState.Idle);
             Error?.Invoke($"Model load failed: {ex.Message}");
         }
-    }
-
-    private async Task DownloadModelAsync(string destPath)
-    {
-        var tmpPath = destPath + ".tmp";
-        using var response = await _httpClient.GetAsync(ModelDownloadUrl, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-        var fileSize = response.Content.Headers.ContentLength ?? 400_000_000L;
-        var buffer = new byte[8192];
-        long totalRead = 0;
-        await using var src = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-        await using (var dst = new FileStream(tmpPath, FileMode.Create, FileAccess.Write))
-        {
-            int read;
-            while ((read = await src.ReadAsync(buffer).ConfigureAwait(false)) > 0)
-            {
-                totalRead += read;
-                await dst.WriteAsync(buffer.AsMemory(0, read)).ConfigureAwait(false);
-                DownloadProgress?.Invoke((double)totalRead / fileSize);
-            }
-        }
-        File.Move(tmpPath, destPath, overwrite: true);
-        _logger.LogInformation("TTS model downloaded successfully.");
     }
 
     /// <summary>Speaks the supplied text, sentence by sentence, honouring pause/stop.</summary>
