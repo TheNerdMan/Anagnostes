@@ -9,7 +9,8 @@
         CanResize="False"
         WindowDecorations="None"
         Background="Transparent"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+		Icon="/assets/Anagnostes-Logo.ico">
 
     <Window.Resources>
         <SolidColorBrush x:Key="WinBg"       Color="#232323"/>
