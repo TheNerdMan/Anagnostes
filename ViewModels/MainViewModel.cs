@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,7 +39,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private string _fetchedArticleText = string.Empty;
     public string FetchedArticleText { get => _fetchedArticleText; set { _fetchedArticleText = value; OnPropertyChanged();  } }
 
-    private string _articleTitle = "ANAGNOSTES";
+    private string _articleTitle = "Ready";
     public string ArticleTitle { get => _articleTitle; set { _articleTitle = value; OnPropertyChanged(); } }
 
     private string _articleText = string.Empty;
@@ -69,7 +70,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         // a bigger jump than that so normal typing/newlines never false-trigger this.
         => !string.IsNullOrWhiteSpace(current) && current.Length - previous.Length > 2;
 
-    private string _statusText = "Ready - paste a URL (or any text) and press LOAD";
+    private string _statusText = "Paste a URL (or any text) and press LOAD";
     public string StatusText { get => _statusText; set { _statusText = value; OnPropertyChanged(); } }
 
     private bool _isBusy;
@@ -93,19 +94,37 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public bool IsPaused  => TtsState == TtsState.Paused;
     public bool CanChangeVoice => ModelReady && TtsState == TtsState.Idle;
 
-    public IReadOnlyList<string> Voices { get; } =
-    ["af_heart", "af_bella", "af_nicole", "am_michael", "am_fenrir", "bf_emma", "bm_george"];
+    public record Voice
+    {
+        public Voice(string a, string b)
+        {
+            KokoroName = a;
+            VoiceName = b;
+        }
+        public string KokoroName { get; internal set; }
+        public string VoiceName { get; internal set; }
+    }
 
-    private string _voice = "af_heart";
-    public string Voice
+    public static IReadOnlyList<Voice> Voices { get; } =
+    [
+        new ("af_heart", "US/F - Heart"), 
+        new ("af_bella" , "US/F - Bella"), 
+        new ("af_nicole", "US/F - Nicole"),
+        new ("am_michael", "US/M - Michael"), 
+        new ("am_fenrir", "US/M - Fenrir"), 
+        new ("bf_emma", "GB/F - Emma"),
+        new ("bm_george", "GB/M - George")
+    ];
+
+    private Voice _voice = Voices[0];
+    public Voice SelectedVoice
     {
         get => _voice;
         set
         {
-            if (string.IsNullOrWhiteSpace(value) || _voice == value) return;
             _voice = value;
-            if (ModelReady) _tts.SetVoice(value);
-            _settings.SetVoice(value);
+            if (ModelReady) _tts.SetVoice(value.KokoroName);
+            _settings.SetVoice(value.KokoroName);
             OnPropertyChanged();
         }
     }
@@ -176,7 +195,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _articles = new ArticleService(loggerFactory.CreateLogger<ArticleService>());
         _settings = new SettingsService(loggerFactory.CreateLogger<SettingsService>());
         _tts = new TtsService(loggerFactory.CreateLogger<TtsService>());
-        _voice = _settings.Voice;
+        _voice = Voices.FirstOrDefault(c => c.KokoroName == _settings.Voice) ?? Voices.First();
         _shareAnonymousLogs = _settings.ShareAnonymousLogs;
         _autoSpeak = _settings.AutoSpeak;
         _modelFolder = _settings.ModelFolder;
@@ -194,6 +213,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _tts.DownloadProgress += p => Dispatcher.UIThread.Post(() =>
         {
             DownloadProgress = p;
+            ArticleTitle = "Loading";
             StatusText = $"Downloading model… {p:P0}";
         });
 
@@ -204,6 +224,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     {
         _logger.LogInformation("TTS initialization requested.");
         IsBusy = true;
+        ArticleTitle = "Loading";
         StatusText = "Loading TTS model…";
         try
         {
@@ -211,7 +232,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             ModelReady = _tts.IsReady;
             if (ModelReady)
             {
-                _tts.SetVoice(Voice);
+                _tts.SetVoice(SelectedVoice.KokoroName);
                 StatusText = "Ready — paste a URL and press LOAD";
             }
         }
@@ -231,6 +252,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         if (string.IsNullOrWhiteSpace(Url)) return;
         _logger.LogInformation("Article fetch requested.");
         IsBusy = true;
+        ArticleTitle = "Loading";
         StatusText = "Fetching article…";
         ArticleText = string.Empty;
         try
@@ -243,7 +265,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "Article fetch failed.");
-            StatusText = $"ΓÜá∩╕Å {ex.Message}";
+            StatusText = $"⚠️ {ex.Message}";
         }
         finally { IsBusy = false; }
     }
@@ -260,6 +282,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     private async Task LoadArticleAsync(string? title, string text, bool setArticleText)
     {
         IsBusy = true;
+        ArticleTitle = "Loading";
         StatusText = "Loading Text...";
         try
         {
