@@ -1,10 +1,11 @@
-# Anagnostes
-
-> ἀναγνώστης - Ancient Greek, “reader, one who reads aloud”.
-
-A WinAMP-inspired article-to-speech player built with **Avalonia UI** (.NET 10) and **KokoroSharp**.
-
-![Anagnostes UI](docs/screenshot.png)
+<h1 align="center">
+  <br>
+  <img src="https://raw.github.com/strumenta/SmartReader/master/assets/Anagnostes-Logo.png" width="256" alt="Anagnostes">
+  <br>
+  Anagnostes
+  <br>
+</h1>
+<h5 align="center">ἀναγνώστης - Ancient Greek, “reader, one who reads aloud”</h5>
 
 ## Features
 
