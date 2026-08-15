@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="https://raw.github.com/strumenta/SmartReader/master/assets/Anagnostes-Logo.png" width="256" alt="Anagnostes">
+  <img src="https://raw.githubusercontent.com/TheNerdMan/Anagnostes/refs/heads/main/assets/Anagnostes-Logo.png" width="256" alt="Anagnostes">
   <br>
   Anagnostes
   <br>
