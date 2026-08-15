@@ -9,7 +9,8 @@
         CanResize="False"
         WindowDecorations="None"
         Background="Transparent"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+		Icon="/assets/Anagnostes-Logo.ico">
 
     <Window.Resources>
         <SolidColorBrush x:Key="WinBg"       Color="#232323"/>
@@ -21,19 +22,21 @@
 
     <Window.Styles>
         <Style Selector="Button.winamp">
-            <Setter Property="Background"      Value="#424242"/>
-            <Setter Property="Foreground"      Value="#CCCCCC"/>
-            <Setter Property="FontFamily"      Value="Consolas,Courier New,monospace"/>
-            <Setter Property="FontSize"        Value="10"/>
-            <Setter Property="FontWeight"      Value="Bold"/>
-            <Setter Property="MinWidth"        Value="36"/>
-            <Setter Property="Height"          Value="22"/>
-            <Setter Property="Padding"         Value="4,0"/>
-            <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="BorderBrush"     Value="#6A6A6A"/>
-            <Setter Property="CornerRadius"    Value="1"/>
-            <Setter Property="Cursor"          Value="Hand"/>
-            <Setter Property="RenderTransform" Value="none"/>
+            <Setter Property="Background"                   Value="#424242"/>
+			<Setter Property="HorizontalContentAlignment"   Value="Center" />
+			<Setter Property="VerticalContentAlignment"     Value="Center" />
+			<Setter Property="Foreground"                   Value="#CCCCCC"/>
+            <Setter Property="FontFamily"                   Value="Consolas,Courier New,monospace"/>
+            <Setter Property="FontSize"                     Value="10"/>
+            <Setter Property="FontWeight"                   Value="Bold"/>
+            <Setter Property="MinWidth"                     Value="36"/>
+            <Setter Property="Height"                       Value="22"/>
+            <Setter Property="Padding"                      Value="4,0"/>
+            <Setter Property="BorderThickness"              Value="2"/>
+            <Setter Property="BorderBrush"                  Value="#6A6A6A"/>
+            <Setter Property="CornerRadius"                 Value="1"/>
+            <Setter Property="Cursor"                       Value="Hand"/>
+            <Setter Property="RenderTransform"              Value="none"/>
             <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Property="Background" Duration="0:0:0.12"/>
@@ -58,18 +61,20 @@
         </Style>
 
         <Style Selector="Button.transport">
-            <Setter Property="Background"      Value="#383838"/>
-            <Setter Property="Foreground"      Value="#88DD44"/>
-            <Setter Property="FontFamily"      Value="Consolas,Courier New,monospace"/>
-            <Setter Property="FontSize"        Value="13"/>
-            <Setter Property="FontWeight"      Value="Bold"/>
-            <Setter Property="Width"           Value="46"/>
-            <Setter Property="Height"          Value="26"/>
-            <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="BorderBrush"     Value="#6A6A6A"/>
-            <Setter Property="Padding"         Value="0"/>
-            <Setter Property="Cursor"          Value="Hand"/>
-            <Setter Property="RenderTransform" Value="none"/>
+            <Setter Property="Background"                   Value="#383838"/>
+            <Setter Property="Foreground"                   Value="#88DD44"/>
+			<Setter Property="HorizontalContentAlignment"   Value="Center" />
+			<Setter Property="VerticalContentAlignment"     Value="Center" />
+            <Setter Property="FontFamily"                   Value="Consolas,Courier New,monospace"/>
+            <Setter Property="FontSize"                     Value="13"/>
+            <Setter Property="FontWeight"                   Value="Bold"/>
+            <Setter Property="Width"                        Value="46"/>
+            <Setter Property="Height"                       Value="26"/>
+            <Setter Property="BorderThickness"              Value="2"/>
+            <Setter Property="BorderBrush"                  Value="#6A6A6A"/>
+            <Setter Property="Padding"                      Value="0"/>
+            <Setter Property="Cursor"                       Value="Hand"/>
+            <Setter Property="RenderTransform"              Value="none"/>
             <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Property="Background" Duration="0:0:0.12"/>
@@ -92,6 +97,16 @@
         <Style Selector="Button.transport:disabled /template/ ContentPresenter">
             <Setter Property="Opacity" Value="0.35"/>
         </Style>
+		<Style Selector="Slider.volume">
+			<Setter Property="MinHeight" Value="8"/>
+		</Style>
+		<Style Selector="Slider.volume Grid#SliderContainer">
+			<Setter Property="Margin" Value="0 0 0 10"/>
+		</Style>
+		<Style Selector="Slider.volume /template/ Thumb">
+			<Setter Property="Height" Value="10"/>
+			<Setter Property="Width" Value="10"/>
+		</Style>
     </Window.Styles>
 
     <!-- Outer shell -->
@@ -212,7 +227,8 @@
                          ToolTip.Tip="Load article from URL"
                          AutomationProperties.Name="Load article"
                          AutomationProperties.HelpText="Fetches article from URL field"
-                         Height="26"
+                         MinHeight="32"
+						 MinWidth="80"
                          FontSize="10"
                          Background="#2A3A2A"
                          Foreground="#88DD44"/>
@@ -263,37 +279,17 @@
                                 AutomationProperties.Name="Stop"
                                 Command="{Binding StopCommand}"/>
                     </StackPanel>
-                    <StackPanel DockPanel.Dock="Right"
-                                Orientation="Horizontal" Spacing="4"
-                                VerticalAlignment="Center"
-                                Margin="0,0,4,0">
-                        <Button Classes="winamp"
-                                Content="⚙️"
-                                ToolTip.Tip="Settings"
-                                AutomationProperties.Name="Open settings"
-                                Command="{Binding SettingsCommand}"/>
-                        <TextBlock Text="VOICE"
-                                   FontFamily="Consolas,Courier New,monospace"
-                                   FontSize="9"
-                                   Foreground="#888888"
-                                   VerticalAlignment="Center"/>
-                        <ComboBox ItemsSource="{Binding Voices}"
-                                  SelectedItem="{Binding Voice}"
-                                  IsEnabled="{Binding CanChangeVoice}"
-                                  Width="100" Height="22"
-                                  FontFamily="Consolas,Courier New,monospace"
-                                  FontSize="9"
-                                  Foreground="#88DD44"
-                                  Background="#141414"
-                                  BorderBrush="#4A4A4A"
-                                  AutomationProperties.Name="Voice"
-                                  AutomationProperties.HelpText="Select text-to-speech voice"/>
+					<StackPanel DockPanel.Dock="Right"
+			                Orientation="Horizontal" Spacing="4"
+			                VerticalAlignment="Center"
+			                Margin="0,0,4,0">
                         <TextBlock Text="VOL"
                                    FontFamily="Consolas,Courier New,monospace"
                                    FontSize="9"
                                    Foreground="#888888"
                                    VerticalAlignment="Center"/>
                         <Slider Minimum="0" Maximum="1"
+								Classes="volume"
                                 Value="{Binding Volume}"
                                 Width="80"
                                 Foreground="#4CD619"
@@ -301,7 +297,40 @@
                                 AutomationProperties.HelpText="Speech volume"
                                 VerticalAlignment="Center"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding TtsState}"
+					<StackPanel DockPanel.Dock="Right"
+                                Orientation="Horizontal" Spacing="4"
+                                VerticalAlignment="Center"
+                                Margin="0,0,4,0">
+						<Button Classes="winamp"
+                                Content="⚙️"
+                                ToolTip.Tip="Settings"
+                                AutomationProperties.Name="Open settings"
+                                Command="{Binding SettingsCommand}"/>
+						<TextBlock Text="VOICE"
+                                   FontFamily="Consolas,Courier New,monospace"
+                                   FontSize="9"
+                                   Foreground="#888888"
+                                   VerticalAlignment="Center"/>
+						<ComboBox ItemsSource="{Binding Voices}"
+                                  SelectedItem="{Binding SelectedVoice}"
+                                  IsEnabled="{Binding CanChangeVoice}"
+                                  Width="120" Height="22" MinHeight="28"
+                                  FontFamily="Consolas,Courier New,monospace"
+                                  FontSize="9"
+                                  Foreground="#88DD44"
+                                  Background="#141414"
+                                  BorderBrush="#4A4A4A"
+                                  AutomationProperties.Name="Voice"
+                                  AutomationProperties.HelpText="Select text-to-speech voice">
+							<ComboBox.ItemTemplate>
+								<DataTemplate>
+									<TextBlock Text="{Binding VoiceName}" />
+								</DataTemplate>
+							</ComboBox.ItemTemplate>
+						</ComboBox>
+					</StackPanel>
+
+					<TextBlock Text="{Binding TtsState}"
                                FontFamily="Consolas,Courier New,monospace"
                                FontSize="10"
                                Foreground="{StaticResource LcdDimGreen}"
@@ -333,14 +362,20 @@
                     <TextBlock Text="VOICE"
                                FontFamily="Consolas,Courier New,monospace"
                                FontSize="10" Foreground="#888888"/>
-                    <ComboBox ItemsSource="{Binding Voices}"
-                              SelectedItem="{Binding Voice}"
+					<ComboBox ItemsSource="{Binding Voices}"
+                              SelectedItem="{Binding SelectedVoice}"
                               IsEnabled="{Binding CanChangeVoice}"
                               Width="180" HorizontalAlignment="Left"
                               FontFamily="Consolas,Courier New,monospace"
                               Foreground="#88DD44" Background="#141414"
                               AutomationProperties.Name="Voice"
-                              AutomationProperties.HelpText="Select text-to-speech voice"/>
+                              AutomationProperties.HelpText="Select text-to-speech voice">
+						<ComboBox.ItemTemplate>
+							<DataTemplate>
+								<TextBlock Text="{Binding VoiceName}" />
+							</DataTemplate>
+						</ComboBox.ItemTemplate>
+					</ComboBox>
                     <CheckBox IsChecked="{Binding AutoSpeak}"
                               Content="Start speaking after load"
                               FontFamily="Consolas,Courier New,monospace"
@@ -377,9 +412,11 @@
                                FontSize="10" Foreground="#888888"/>
                     <CheckBox IsChecked="{Binding ShareAnonymousLogs}"
                               Content="Share anonymous logs"
+                              IsEnabled="False"
                               FontFamily="Consolas,Courier New,monospace"
                               Foreground="#CCCCCC"/>
-                    <TextBlock Text="Opt-in only. Current app sends nothing; future diagnostics may use app events and counts, never URLs or article text."
+                    <TextBlock Text="Disabled, in future diagnostics we may use app events and counts. No personal data 
+                            is collected. We'd use this for crash reports and usage statistics to improve the app."
                                TextWrapping="Wrap"
                                FontFamily="Consolas,Courier New,monospace"
                                FontSize="10" Foreground="#888888"/>
