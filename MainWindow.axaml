@@ -314,7 +314,7 @@
 						<ComboBox ItemsSource="{Binding Voices}"
                                   SelectedItem="{Binding SelectedVoice}"
                                   IsEnabled="{Binding CanChangeVoice}"
-                                  Width="120" Height="22"
+                                  Width="120" Height="22" MinHeight="28"
                                   FontFamily="Consolas,Courier New,monospace"
                                   FontSize="9"
                                   Foreground="#88DD44"
@@ -412,9 +412,11 @@
                                FontSize="10" Foreground="#888888"/>
                     <CheckBox IsChecked="{Binding ShareAnonymousLogs}"
                               Content="Share anonymous logs"
+                              IsEnabled="False"
                               FontFamily="Consolas,Courier New,monospace"
                               Foreground="#CCCCCC"/>
-                    <TextBlock Text="Opt-in only. Current app sends nothing; future diagnostics may use app events and counts, never URLs or article text."
+                    <TextBlock Text="Disabled, in future diagnostics we may use app events and counts. No personal data 
+                            is collected. We'd use this for crash reports and usage statistics to improve the app."
                                TextWrapping="Wrap"
                                FontFamily="Consolas,Courier New,monospace"
                                FontSize="10" Foreground="#888888"/>
